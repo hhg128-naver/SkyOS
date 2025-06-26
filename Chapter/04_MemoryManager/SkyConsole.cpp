@@ -242,7 +242,7 @@ namespace SkyConsole
 		OutPortByte(m_VideoCardType, VGA_CRT_CURSOR_H_LOCATION);
 		OutPortByte(m_VideoCardType + 1, Offset >> 8);
 		OutPortByte(m_VideoCardType, VGA_CRT_CURSOR_L_LOCATION);
-		OutPortByte(m_VideoCardType + 1, (Offset << 8) >> 8);
+		OutPortByte(m_VideoCardType + 1, Offset & 0xFF);
 
 		if (X > 0)
 			m_xPos = X - 1;
