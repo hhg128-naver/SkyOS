@@ -20,11 +20,26 @@ namespace VirtualMemoryManager
 	//가상 주소와 매핑된 실제 물리 주소를 얻어낸다.
 	void* VirtualMemoryManager::GetPhysicalAddressFromVirtualAddress(PageDirectory* directory, uint32_t virtualAddress)
 	{
-		PDE* pagedir = directory->m_entries;
-		if (pagedir[virtualAddress >> 22] == 0)
+		PDE* pageDirectory = directory->m_entries;
+		uint32_t directoryIndex = virtualAddress >> 22;
+
+		// PDE가 존재하지 않으면 NULL 반환
+		if (pageDirectory[directoryIndex] == 0)
 			return NULL;
 
-		return (void*)((uint32_t*)(pagedir[virtualAddress >> 22] & ~0xfff))[virtualAddress << 10 >> 10 >> 12];
+		// PDE에서 페이지 테이블의 가상 주소를 얻는다
+		PTE* pageTable = (PTE*)(pageDirectory[directoryIndex] & ~0xFFF);
+
+		uint32_t tableIndex = (virtualAddress >> 12) & 0x3FF;
+
+		// PTE가 존재하지 않으면 NULL 반환
+		if (pageTable[tableIndex] == 0)
+			return NULL;
+
+		uint32_t physicalPage = pageTable[tableIndex] & ~0xFFF;
+		uint32_t offset = virtualAddress & 0xFFF;
+
+		return (void*)(physicalPage + offset);
 	}
 
 	//페이지 디렉토리 엔트리 인덱스가 0이 아니면 이미 페이지 테이블이 존재한다는 의미
@@ -80,7 +95,11 @@ namespace VirtualMemoryManager
 		uint32_t mask = (uint32_t)(~0xfff);
 		uint32_t* pageTable = (uint32_t*)(pageDir[virt >> 22] & mask);
 
-		pageTable[virt << 10 >> 10 >> 12] = phys | flags;
+		// 페이지 테이블 인덱스 계산
+		uint32_t tableIndex = (virt >> 12) & 0x3FF;
+
+		// 매핑 수행
+		pageTable[tableIndex] = phys | flags;
 
 		PhysicalMemoryManager::EnablePaging(true);
 		kLeaveCriticalSection();
