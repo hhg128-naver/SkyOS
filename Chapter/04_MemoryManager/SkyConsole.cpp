@@ -269,10 +269,17 @@ namespace SkyConsole
 
 		//	disable();	//this memory operation should not be interrupted,
 						//can cause errors (more of an annoyance than anything else)
-		for (t = 0; t < m_ScreenWidth * (m_ScreenHeight - 1); t++)		// scroll every line up
-			*(m_pVideoMemory + t) = *(m_pVideoMemory + t + m_ScreenWidth);
-		for (; t < m_ScreenWidth * m_ScreenHeight; t++)				//clear the bottom line
-			*(m_pVideoMemory + t) = ' ' | ((unsigned char)m_Color << 8);
+
+		uint total = m_ScreenWidth * m_ScreenHeight;
+		uint line = m_ScreenWidth;
+
+		// 윗줄 덮어쓰기
+		for (uint i = 0; i < total - line; i++)
+			m_pVideoMemory[i] = m_pVideoMemory[i + line];
+
+		// 마지막 줄 지우기
+		for (uint i = total - line; i < total; i++)
+			m_pVideoMemory[i] = ' ' | (m_Color << 8);
 
 		//enable();
 	}
